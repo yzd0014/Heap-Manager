@@ -40,8 +40,8 @@ void * HeapManager::_alloc(size_t i_size, unsigned int i_alignment)
 	
 	BlockDescriptor * iterator = &freeHeader;
 	while (iterator->next != NULL && unusedHeader.next != NULL) {
-		if (iterator->next->size >= i_size) {
-			output = reinterpret_cast<uintptr_t>(iterator->next->starter) + iterator->next->size - i_size;
+		if (iterator->next->size >= i_size + 8) {
+			output = reinterpret_cast<uintptr_t>(iterator->next->starter) + iterator->next->size - i_size - 4;
 			//output = (size_t)iterator->next->starter + iterator->next->size - i_size;
 			
 			uintptr_t remainder = output % i_alignment;
@@ -50,9 +50,9 @@ void * HeapManager::_alloc(size_t i_size, unsigned int i_alignment)
 			//output = output - remainder;
 			//iterator->next->size = iterator->next->size - i_size - remainder;
 
-			if (iterator->next->size == i_size + remainder) {//talk out from free list and add descriptor back to unused list
+			if (iterator->next->size == i_size + remainder + 8) {//talk out from free list and add descriptor back to unused list
 				output = output - remainder;
-				iterator->next->size = iterator->next->size - i_size - remainder;
+				iterator->next->size = iterator->next->size - i_size - remainder - 8;
 
 				BlockDescriptor * temp = iterator->next->next;
 				iterator->next->starter = NULL;
@@ -61,19 +61,19 @@ void * HeapManager::_alloc(size_t i_size, unsigned int i_alignment)
 				unusedHeader.next = iterator->next;
 				iterator->next = temp;
 			}
-			else if (iterator->next->size < i_size + remainder) {
+			else if (iterator->next->size < i_size + remainder + 8) {
 				output = NULL;
 				iterator = iterator->next;
 				continue;
 			}
 			else {
 				output = output - remainder;
-				iterator->next->size = iterator->next->size - i_size - remainder;
+				iterator->next->size = iterator->next->size - i_size - remainder - 8;
 			}
-			unusedHeader.next->starter = reinterpret_cast<void *>(output);
+			unusedHeader.next->starter = reinterpret_cast<void *>(output - 4);
 			//unusedHeader.next->starter = (void *)output;
 			
-			unusedHeader.next->size = i_size + remainder;
+			unusedHeader.next->size = i_size + remainder + 8;
 			BlockDescriptor * temp = unusedHeader.next->next;
 			unusedHeader.next->next = outstandingHeader.next;
 			outstandingHeader.next = unusedHeader.next;
@@ -89,6 +89,7 @@ void * HeapManager::_alloc(size_t i_size, unsigned int i_alignment)
 
 bool HeapManager::_free(void * i_ptr) {
 	bool freed = false;
+	i_ptr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(i_ptr) - 4);
 	BlockDescriptor * iterator = &outstandingHeader;
 	while (iterator->next != NULL) {
 		if (iterator->next->starter == i_ptr) {

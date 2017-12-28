@@ -5,9 +5,10 @@
 
 using namespace std;
 inline HeapManager * HeapManager::create(void * i_pMemory, size_t i_sizeMemory, unsigned int i_numDescriptors) {
+	uintptr_t pTrueStarter;
+		pTrueStarter = reinterpret_cast<uintptr_t>(i_pMemory) + sizeof(HeapManager);
 	if (heapManager == nullptr) {
-		static HeapManager hp(i_pMemory, i_sizeMemory, i_numDescriptors);
-		heapManager = &hp;
+		heapManager = new (i_pMemory) HeapManager(reinterpret_cast<void *>(pTrueStarter), i_sizeMemory - sizeof(HeapManager), i_numDescriptors);
 	}
 	
 	return heapManager;

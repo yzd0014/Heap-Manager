@@ -11,7 +11,7 @@ using namespace std;
 
 int main(int argc, const char * argv[])
 {
-	//HeapManager_UnitTest();
+	HeapManager_UnitTest();
 	//Vector2D_UnitTest();
 	//BitArray_UnitTest();
 	//FSA_UnitTest();
